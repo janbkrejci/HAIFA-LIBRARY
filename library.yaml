@@ -1,0 +1,28 @@
+format: 1
+id: 7a09b47a-08b8-4719-9e7b-e7d2c02c4be5
+name: library
+min_factory_version: null
+seed:
+  agent/builder: sha256:5309edaf87f1f5ecb0c8e1869841959a0679a585cfa74d05813a09ea919efab3
+  agent/documenter: sha256:e3eb223023d25c16b02277c8b399a4ca0b37aba8ecd339cab9ce621574ba12e0
+  agent/planner: sha256:fe74d69bed18866a404cb47d1c0b34aceaa4ab53ce91e7a493f31c92f482e720
+  agent/reviewer: sha256:9f8ac0ed4e76c412853549e69811a05203735e336e920ea21e36a781903ec231
+  agent/scout: sha256:1f01dbbb5afadc18418aea491e785b44c65881655821834daa089bfb69528a5b
+  agent/test-reviewer: sha256:f0fe44f63e662970e43bb81dca43b1856fe8b188559b5bf3ce7d0f50862b6c28
+  agent/tester: sha256:6f15a6a86fc50347bd913d5a946adeaac199d87356de2b5a4ef275e46b25ffd7
+  workflow/build: sha256:2104aaa28d2fe251ab833e7c05ba60401f89439079722c070c9389c34b235118
+  workflow/build-review: sha256:62247835d76d672725c27eebc83ebf21865e708ef100ac9bf9aeffa54bfd7082
+  workflow/build-test: sha256:31217a98650c5c224eb9b940dd6e6cd3f4d466ea76bea4f5309b4d527e74f95f
+  workflow/build-test-review: sha256:b79dbaf86a08190f1cf122d7c30e5cf2d1df3395302e8b9e1666a9269b538655
+  workflow/document: sha256:dca102a1070d9a62c77bffed126620dbbdccbbd6a49665726ea16d62743df692
+  workflow/heal: sha256:41f868ec6a9864f9faca8d3e0ec98ade7ec7862e2d37c97c4c119ee9ef25100a
+  workflow/plan: sha256:eb3994e6a072e3920edcc7c8c439db57e33204374695a6d57efc5ed05fea448a
+  workflow/plan-build: sha256:2060c4b6bc352584bac2a9931212cab00cdd1155cf3ef6d6ce716370e4d9b5a0
+  workflow/plan-build-test: sha256:adf00c409a2e0eb1107d94f1d61f9ceb3e95dff031c5d0648ce95de968db81ef
+  workflow/plan-build-test-quality: sha256:4d03c24fdb2b3bae44c32ef7342f3850a41c3fe17899d4151491505b266340ae
+  workflow/quality: sha256:882ad97068b777930cc34172b84084b7db6f7cc4aa60ad7a155d05dc9a61edb1
+  workflow/resolve: sha256:4c114c059b172f2098affe867a489b4ff390cb39b5f34fa63065d9377fe914b3
+  workflow/resolve-reviewed: sha256:804890782ef1db8690b1a11af2c8d148ddd1799ceda5684eb2c48503d58441e3
+  workflow/scout: sha256:509b75bb5e80f7ff0164374c0fc1257e1be4ce7631a9f5feff2f6f9b57ee3383
+  workflow/simple-sdlc: sha256:1d57fd721c4a42b8e8f4af9916485211ef8f612ae2bd69a0f8972194aa5592f7
+  extension/subagents: sha256:bc43c314ed1c5c89b06ad5bdaed6473a5fda24eafdba329a94190bab1b20bf33
