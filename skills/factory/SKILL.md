@@ -9,12 +9,12 @@ description: >-
   multi-repository operations.
 ---
 
-# HAIFA skill: driving the `factory` CLI (aifactory 0.1.380)
+# HAIFA skill: driving the `factory` CLI (aifactory 0.1.400)
 
 This guide is generated from the installed code by `factory --skill`.
 Save its Markdown output as an agent's `SKILL.md`; `factory --skill --json`
 returns the same guide inside the JSON envelope. Compare `factory --version`
-with aifactory 0.1.380: whenever the version changes, regenerate this skill
+with aifactory 0.1.400: whenever the version changes, regenerate this skill
 with `factory --skill` and replace the saved copy.
 
 ## Prerequisites
@@ -290,7 +290,7 @@ Run a task from the backlog in base in a new worktree <worktrees_dir>/<run-id> o
 factory task approve ID [--json] [--repo PATH]
 ```
 
-Add a commit with status: done and a line in '## Běhy' to the task's pull request, wait for the CI checks of that head, merge it, bring base up to date with the remote and remove the branch's worktrees. Red checks start up to 2 ci-fix repair runs on the PR branch (started_by auto-ci-fix), each followed by a new wait; checks still red or running leave the PR open (auto_merge_error). Azure sends an approval vote after the final push and before merge; local and GitHub do not send a self-approval review.
+Add a commit with status: done and a line in '## Běhy' to the task's pull request, wait for the CI checks of that head, merge it, bring base up to date with the remote and remove the branch's worktrees. After restacking dependents, delete the merged branch locally and on the remote unless an open stacked PR, a running run or a checkout still uses it. Deletion failures are warnings; deleted_branches lists deleted refs (remote refs prefixed by the remote name). Red checks start up to 2 ci-fix repair runs on the PR branch (started_by auto-ci-fix), each followed by a new wait; checks still red or running leave the PR open (auto_merge_error). Azure sends an approval vote after the final push and before merge; local and GitHub do not send a self-approval review.
 
 - `ID`: task id (required)
 - `--json`: print machine-readable JSON
@@ -327,7 +327,7 @@ Start a new run on the branch of the task's pull request: rebase it onto the cur
 factory task publish ID [--json] [--repo PATH]
 ```
 
-For the task's last succeeded run that has no pull request (its push or PR failed at the end of 'task run'): push the branch and open the pull request with the body from the run, recorded like after 'task run'. An open PR the hosting already has for the branch is adopted and its body updated. Without a succeeded run, with a known PR or while a run is in progress it fails with exit 2 and changes nothing.
+For the task's last succeeded run that has no pull request (its push or PR failed at the end of 'task run'): push the branch and open the pull request with the body from the run, then finish auto-merge and auto-continue as after 'task run'. An open PR the hosting already has for the branch is adopted and its body updated. Without a succeeded run, with a known PR or while a run is in progress it fails with exit 2 and changes nothing.
 
 - `ID`: task id (required)
 - `--json`: print machine-readable JSON
@@ -339,7 +339,7 @@ For the task's last succeeded run that has no pull request (its push or PR faile
 factory task clean [--json] [--repo PATH]
 ```
 
-Remove worktrees of runs whose PR is merged or closed, and of abandoned runs (a newer run of the task exists).
+Remove worktrees of runs whose PR is merged or closed, and of abandoned runs (a newer run of the task exists). Also delete local and remote branches of merged PRs, including older merges, unless an open stacked PR, a running run or a checkout still uses them. Keep closed and abandoned branches. Deletion failures are warnings; deleted_branches lists deleted local and remote refs.
 
 - `--json`: print machine-readable JSON
 - `--repo` `PATH`: repository root with .factory/config.yaml (default: the current git repo)
@@ -1849,7 +1849,16 @@ branch and opens the PR with the body kept from the run, recorded in `task_prs` 
 run. When the hosting already has an open PR for the branch that factory does not know, it
 is adopted (recorded, its body updated) instead of opening a second one. A push failing on
 the network (RPC failed, HTTP2 framing, remote end hung up, timeout) is retried a few times
-with a pause; a rejected push (non-fast-forward, rights) is not.
+with a pause, including hosting server errors (HTTP 5xx, Internal Server Error); a rejected
+push (non-fast-forward, rights, protected branch or hook) is not.
+
+After publication, effective `auto_merge` merges the PR under the same review and CI
+conditions as `task run`, including conflict resolution and `auto_merge_error` on failure.
+The same auto-continue chain then selects ready tasks in kanban order and respects slots
+and `max_parallel_runs`. No `--auto` flag is needed: inherited `auto_continue` applies.
+Without `auto_merge` the PR stays open for review.
+`data.auto_merge` and `data.chain` report the merge outcome, runs and stop reason.
+The dashboard starts publish with auto-merge in a separate process so CI never blocks it.
 
 - `data.run`, `data.pr`, `data.pr_error`: as for a run.
 - `no_succeeded_run` (exit 2): no succeeded run; nothing changed.
