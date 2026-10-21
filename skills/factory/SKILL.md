@@ -9,12 +9,12 @@ description: >-
   multi-repository operations.
 ---
 
-# HAIFA skill: driving the `factory` CLI (aifactory 0.1.418)
+# HAIFA skill: driving the `factory` CLI (aifactory 0.1.472)
 
 This guide is generated from the installed code by `factory --skill`.
 Save its Markdown output as an agent's `SKILL.md`; `factory --skill --json`
 returns the same guide inside the JSON envelope. Compare `factory --version`
-with aifactory 0.1.418: whenever the version changes, regenerate this skill
+with aifactory 0.1.472: whenever the version changes, regenerate this skill
 with `factory --skill` and replace the saved copy.
 
 ## Prerequisites
@@ -258,7 +258,7 @@ List tasks with their derived state (ready/blocked/done/cancelled).
 factory task runs ID [--json] [--repo PATH]
 ```
 
-List every run of a task, newest first: state, failure_kind (why a run did not succeed: accept_not_met, nothing_to_do, quota, writes_violation, invalid_output, process_gone, stopped, blocked or other) and the error; a blocked run (it waits for blocking tasks) lists its blockers. --json gives each run with failure_kind and failure_detail.
+List every run of a task, newest first: state, failure_kind (why a run did not succeed: accept_not_met, nothing_to_do, quota, writes_violation, writes_needed, invalid_output, process_gone, stopped, blocked or other) and the error; a blocked run (it waits for blocking tasks) lists its blockers. --json gives each run with failure_kind and failure_detail.
 
 - `ID`: task id (required)
 - `--json`: print machine-readable JSON
@@ -287,12 +287,13 @@ Run a task from the backlog in base in a new worktree <worktrees_dir>/<run-id> o
 ### factory task approve
 
 ```
-factory task approve ID [--json] [--repo PATH]
+factory task approve ID [--allow-writes] [--json] [--repo PATH]
 ```
 
-Add a commit with status: done and a line in '## Běhy' to the task's pull request, wait for the CI checks of that head, merge it, bring base up to date with the remote and remove the branch's worktrees. After restacking dependents, delete the merged branch locally and on the remote unless an open stacked PR, a running run or a checkout still uses it. Deletion failures are warnings; deleted_branches lists deleted refs (remote refs prefixed by the remote name). Red checks start up to 2 ci-fix repair runs on the PR branch (started_by auto-ci-fix), each followed by a new wait; checks still red or running leave the PR open (auto_merge_error). Azure sends an approval vote after the final push and before merge; local and GitHub do not send a self-approval review.
+Add a commit with status: done and a line in '## Běhy' to the task's pull request, wait for the CI checks of that head, merge it, bring base up to date with the remote and remove the branch's worktrees. After restacking dependents, delete the merged branch locally and on the remote unless an open stacked PR, a running run or a checkout still uses it. Deletion failures are warnings; deleted_branches lists deleted refs (remote refs prefixed by the remote name). Red checks start up to 2 ci-fix repair runs on the PR branch (started_by auto-ci-fix), each followed by a new wait; checks still red or running leave the PR open (auto_merge_error). Azure sends an approval vote after the final push and before merge; local and GitHub do not send a self-approval review. A ci-fix run that needs paths outside the task's writes leaves the PR open with writes_needed; --allow-writes adds those paths to the task's writes in base first.
 
 - `ID`: task id (required)
+- `--allow-writes`: after a ci-fix run that ended writes_needed: add the paths it needs to the task's writes (committed to base by base_changes), then approve again; the new ci-fix runs may write them. Paths in protected_files or in the backlog are never added
 - `--json`: print machine-readable JSON
 - `--repo` `PATH`: repository root with .factory/config.yaml (default: the current git repo)
 
@@ -396,7 +397,7 @@ Continue the task's newest failed, stopped or aborted run in its own worktree an
 - `--note` `TEXT`: a note for the agents of the continuing phases
 - `--from` `PHASE`: continue from this phase (a phase name like review_2 or a step like review) instead of the one that failed; the phases after it run again
 - `--auto`: after a successful retry (PR opened) start the next ready task whatever its auto_continue, like factory task run --auto. Without it the retry goes on like task run: auto_merge merges the PR and auto_continue starts the next ready task
-- `--allow-writes`: after a writes_violation: add the paths written outside writes to the task's writes (committed to base by base_changes), then retry. Paths in protected_files, in the backlog or in the main checkout are never added
+- `--allow-writes`: after a writes_violation or writes_needed: add the paths written outside writes or reported in needs_writes to the task's writes (committed to base by base_changes), then retry from the failed phase with the paths in the Retry note. Paths in protected_files, in the backlog or in the main checkout are never added. If base lacks the new writes (writes_not_committed), commit the backlog, then factory task retry ID
 - `--harness` `NAME`: continue with every agent on this harness (e.g. after a quota failure); it replaces the run's harness override, the switch is recorded in the run and its PR. Without --model the computer's model for the harness, else its preset model
 - `--model` `NAME`: model of every agent for the retry (with --harness)
 - `--thinking` `{off,minimal,low,medium,high,xhigh,max,ultra}`: thinking level of every agent for the retry (with --harness) (one of `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, `ultra`)
@@ -970,7 +971,7 @@ serve the local dashboard (127.0.0.1 unless --host) and open it
 | `not_in_seed` | 2 | library seed --take: the installed seed has no such item |
 | `not_nothing_to_do` | 2 | dashboard Hotovo of a run: the run did not fail with nothing_to_do |
 | `not_on_base` | 2 | backlog/config commit: the main checkout is not on the base branch |
-| `not_writes_violation` | 2 | task retry --allow-writes: the run did not fail with writes_violation |
+| `not_writes_violation` | 2 | task retry/approve --allow-writes: the run did not fail with writes_violation or writes_needed (approve: the newest run is not a ci-fix run) |
 | `nothing_to_allow` | 2 | task retry --allow-writes: no path writes can allow (protected, backlog, main checkout, or allowed already) |
 | `outside_backlog` | 2 | the file is outside backlog_dir |
 | `outside_home` | 2 | dashboard API: the folder is outside the user's home once symlinks are resolved (HTTP 403) |
@@ -998,7 +999,7 @@ serve the local dashboard (127.0.0.1 unless --host) and open it
 | `run_in_progress` | 2 | a run with a live process is in progress in the repository (blocks base moves and config set/remove/move) |
 | `run_not_archived` | 2 | only an archived run can be deleted |
 | `run_not_paused` | 2 | the run is not paused, there is nothing to resume |
-| `run_not_retryable` | 2 | task retry: the run is not failed, stopped or aborted, or it is a resolve run |
+| `run_not_retryable` | 2 | task retry: the run is not failed, stopped or aborted, or it is a resolve or ci-fix run (after a ci-fix writes_needed: task approve --allow-writes) |
 | `run_not_running` | 2 | the run is not running (finished, stopped or aborted) |
 | `run_running` | 2 | the run is still running and cannot be archived |
 | `run_worktree` | 2 | dashboard API: the path is a worktree of a task run (HTTP 422) |
@@ -1009,6 +1010,7 @@ serve the local dashboard (127.0.0.1 unless --host) and open it
 | `task_blocked` | 2 | the task has unmet depends_on (a blocker a run reported); finish them first |
 | `task_done` | 2 | task retry: the task's PR is merged or the task is done in base |
 | `task_not_in_base` | 2 | the task is not committed in base |
+| `task_running` | 2 | dashboard API: a running task cannot be edited or linked |
 | `trace_db_locked` | 2 | the trace database is locked by another process |
 | `trace_db_shared` | 2 | dashboard API: another registered repository uses the same trace DB (HTTP 409) |
 | `unknown_base` | 2 | the base branch does not exist |
@@ -1035,6 +1037,8 @@ serve the local dashboard (127.0.0.1 unless --host) and open it
 | `worktree_remove_failed` | 2 | a worktree could not be removed |
 | `write_failed` | 2 | the task file could not be written |
 | `writes_in_pr` | 2 | task retry --allow-writes: the writes change waits in an unmerged backlog PR |
+| `writes_needed` | 2 | task approve: a ci-fix run needs paths outside the task's writes (listed); the PR stays open; task approve --allow-writes adds them and approves again |
+| `writes_not_committed` | 2 | task retry --allow-writes: base lacks the new writes; commit the backlog, then retry |
 
 Codes that appear in `error.issues[].code` (and in `data.issues[].code`), by source
 (`check`: `data.findings[].code` of `factory check`; `item_origin`: the `origin` of an
@@ -1067,7 +1071,8 @@ What to do with the common ones:
   remote and the provider CLI (`gh`, `az`), then `factory task publish ID --json` (see
   Publish). A push that failed on the network was already retried a few times.
 - `run_failed`: read `data.run.failure_kind` (`accept_not_met`, `nothing_to_do`, `quota`,
-  `writes_violation`, `invalid_output`, `process_gone`, `stopped`, `blocked`, `other`), its
+  `writes_violation`, `writes_needed`, `invalid_output`, `process_gone`, `stopped`,
+  `blocked`, `other`), its
   facts in `data.run.failure_detail` and the text in `data.run.error`; `factory task runs ID
   --json` and `factory task show ID --json` give them for every run (a run recorded before
   the field reads as `other`, or `blocked` when its error starts with `blocked: `).
@@ -1808,12 +1813,20 @@ NAME] [--thinking LEVEL]] --json` continues the task's newest `failed`, `stopped
    `done`), `already_running`, `run_not_retryable` (a succeeded or running run, or a
    resolve run), `unknown_branch` (the run's branch is gone).
 7. After a `writes_violation` (`data.run.failure_detail.paths` are the worktree paths
-   written outside `writes`), `factory task retry ID --allow-writes --json` first adds
-   them to the task's `writes` and commits the backlog to base (by `base_changes`), then
-   retries; `data.allow_writes` lists `allow` and `refused` (with `reason`). A path in
+   written outside `writes`) or a `writes_needed` (an agent reported `fail_kind:
+   needs_writes`: `failure_detail.paths` and `needs_writes` hold the paths this task must
+   change, with the agent's reasons), `factory task retry ID --allow-writes --json` first
+   adds them to the task's `writes` and commits the backlog to base (by `base_changes`),
+   then retries from the failed phase with the allowed paths in the `## Retry note`;
+   `data.allow_writes` lists `allow` and `refused` (with `reason`). A path in
    `protected_files`, in the backlog or in the main checkout is never added. Refused:
    `not_writes_violation`, `nothing_to_allow`, `writes_in_pr` (base_changes: pr and the
-   backlog PR is not merged yet: retry after the merge).
+   backlog PR is not merged yet: retry after the merge), `writes_not_committed` (the
+   backlog in base lacks the new effective writes: commit the backlog with
+   `factory backlog commit --json`, then `factory task retry ID --json`). The retry
+   starts only after all allowed paths are verified in the base commit, including
+   when the commit reports no change or a backlog PR has merged. A `ci-fix` run is not
+   retried (`run_not_retryable`): see Approve.
 8. `--harness` (with `--model`, `--thinking`) continues with every agent on another
    harness, e.g. after `failure_kind: quota`; it replaces the run's roster override. The
    switch is in `data.run.retries[].harness_switch` (`from`, `to`, `reason`, `auto`), in
@@ -1840,6 +1853,12 @@ NAME] [--thinking LEVEL]] --json` continues the task's newest `failed`, `stopped
 3. On GitHub an approve review is sent as `github_approver` (`config.yaml`, another
    account logged in to `gh`) when it is set; otherwise none is sent. Azure DevOps gets
    an approval vote. `data.reviewed` says whether a host approval was sent.
+4. Red CI checks start up to 2 `ci-fix` runs on the PR branch. One that ends
+   `writes_needed` (its agent needs paths outside the task's `writes`) leaves the PR open
+   with `writes_needed` and the paths (`task_prs.auto_merge_error`). `factory task approve
+   ID --allow-writes --json` adds them to the task's `writes` in base (same refusals as
+   `task retry --allow-writes`, `data.allow_writes`) and approves again, so the new
+   `ci-fix` runs may write them.
 
 ### Publish
 
