@@ -9,12 +9,12 @@ description: >-
   multi-repository operations.
 ---
 
-# HAIFA skill: driving the `factory` CLI (aifactory 0.1.472)
+# HAIFA skill: driving the `factory` CLI (aifactory 0.1.475)
 
 This guide is generated from the installed code by `factory --skill`.
 Save its Markdown output as an agent's `SKILL.md`; `factory --skill --json`
 returns the same guide inside the JSON envelope. Compare `factory --version`
-with aifactory 0.1.472: whenever the version changes, regenerate this skill
+with aifactory 0.1.475: whenever the version changes, regenerate this skill
 with `factory --skill` and replace the saved copy.
 
 ## Prerequisites
@@ -1714,6 +1714,8 @@ and after its pull request was merged. The agent's prompts are overridden in
 5. Auto-continue (`--auto`, or `auto_continue: true` in the project or step
    `index.md`, set with `factory backlog auto-continue ID --on|--off|--inherit`):
    after a run opens its PR, the next ready task of the step, then of the project, starts.
+   The chain stays in that project, even with `--auto`: tasks of other projects,
+   including blockers and direct dependents, must be started separately.
    Without `--auto` the chain continues only after a task with `auto_continue: true` and
    starts only tasks with `auto_continue: true`; `--auto` starts any task.
    The dashboard's kanban sets the order of ready tasks (taken first) and can exclude a
