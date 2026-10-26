@@ -9,12 +9,12 @@ description: >-
   multi-repository operations.
 ---
 
-# HAIFA skill: driving the `factory` CLI (aifactory 0.1.533)
+# HAIFA skill: driving the `factory` CLI (aifactory 0.1.537)
 
 This guide is generated from the installed code by `factory --skill`.
 Save its Markdown output as an agent's `SKILL.md`; `factory --skill --json`
 returns the same guide inside the JSON envelope. Compare `factory --version`
-with aifactory 0.1.533: whenever the version changes, regenerate this skill
+with aifactory 0.1.537: whenever the version changes, regenerate this skill
 with `factory --skill` and replace the saved copy.
 
 ## Prerequisites
@@ -499,10 +499,10 @@ Create a project (without PARENT) or a step of project PARENT: the directory <co
 ### factory backlog edit
 
 ```
-factory backlog edit ID [--title TEXT] [--workflow NAME] [--writes [PATH ...]] [--auto-continue {on,off}] [--auto-heal {on,off}] [--quota-switch [HARNESS ...]] [--quota-switch-back {on,off}] [--clear {harness,model,thinking,workflow,writes,auto_continue,auto_heal,quota_switch,quota_switch_back} [{harness,model,thinking,workflow,writes,auto_continue,auto_heal,quota_switch,quota_switch_back} ...]] [--json] [--repo PATH]
+factory backlog edit ID [--title TEXT] [--workflow NAME] [--writes [PATH ...]] [--auto-continue {on,off}] [--auto-heal {on,off}] [--quota-switch [HARNESS ...]] [--quota-switch-back {on,off}] [--clear {archived,harness,model,thinking,workflow,writes,auto_continue,auto_heal,quota_switch,quota_switch_back} [{archived,harness,model,thinking,workflow,writes,auto_continue,auto_heal,quota_switch,quota_switch_back} ...]] [--json] [--repo PATH]
 ```
 
-Change the title of a project or step and set or remove (--clear) the keys harness, model, thinking, workflow, writes, auto_continue, auto_heal, quota_switch, quota_switch_back of its index.md. Other keys and the description stay as they are. The backlog is validated before writing; nothing is committed.
+Change the title of a project or step and set or remove (--clear) the keys archived, harness, model, thinking, workflow, writes, auto_continue, auto_heal, quota_switch, quota_switch_back of its index.md. Other keys and the description stay as they are. The backlog is validated before writing; nothing is committed.
 
 - `ID`: project or step id (required)
 - `--title` `TEXT`: new title
@@ -512,7 +512,7 @@ Change the title of a project or step and set or remove (--clear) the keys harne
 - `--auto-heal` `{on,off}`: set auto_heal: the chain's automatic actions after a failure (default on) (one of `on`, `off`)
 - `--quota-switch` `[HARNESS ...]`: project only: set quota_switch, the backup harnesses in order a run switches to when its harness runs out of quota (none = [], off)
 - `--quota-switch-back` `{on,off}`: project only: set quota_switch_back: new runs go back up the chain once a harness has its limit back (one of `on`, `off`)
-- `--clear` `{harness,model,thinking,workflow,writes,auto_continue,auto_heal,quota_switch,quota_switch_back} [{harness,model,thinking,workflow,writes,auto_continue,auto_heal,quota_switch,quota_switch_back} ...]`: remove keys (inherit them again): harness, model, thinking, workflow, writes, auto_continue, auto_heal, quota_switch, quota_switch_back (one of `harness`, `model`, `thinking`, `workflow`, `writes`, `auto_continue`, `auto_heal`, `quota_switch`, `quota_switch_back`)
+- `--clear` `{archived,harness,model,thinking,workflow,writes,auto_continue,auto_heal,quota_switch,quota_switch_back} [{archived,harness,model,thinking,workflow,writes,auto_continue,auto_heal,quota_switch,quota_switch_back} ...]`: remove keys (inherit them again): archived, harness, model, thinking, workflow, writes, auto_continue, auto_heal, quota_switch, quota_switch_back (one of `archived`, `harness`, `model`, `thinking`, `workflow`, `writes`, `auto_continue`, `auto_heal`, `quota_switch`, `quota_switch_back`)
 - `--json`: print machine-readable JSON
 - `--repo` `PATH`: repository root with .factory/config.yaml (default: the current git repo)
 
