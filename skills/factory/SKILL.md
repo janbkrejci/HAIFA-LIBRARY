@@ -9,12 +9,12 @@ description: >-
   multi-repository operations.
 ---
 
-# HAIFA skill: driving the `factory` CLI (aifactory 0.1.482)
+# HAIFA skill: driving the `factory` CLI (aifactory 0.1.533)
 
 This guide is generated from the installed code by `factory --skill`.
 Save its Markdown output as an agent's `SKILL.md`; `factory --skill --json`
 returns the same guide inside the JSON envelope. Compare `factory --version`
-with aifactory 0.1.482: whenever the version changes, regenerate this skill
+with aifactory 0.1.533: whenever the version changes, regenerate this skill
 with `factory --skill` and replace the saved copy.
 
 ## Prerequisites
@@ -1011,6 +1011,7 @@ serve the local dashboard (127.0.0.1 unless --host) and open it
 | `task_done` | 2 | task retry: the task's PR is merged or the task is done in base |
 | `task_not_in_base` | 2 | the task is not committed in base |
 | `task_running` | 2 | dashboard API: a running task cannot be edited or linked |
+| `terminal_disabled` | 2 | dashboard API: the terminal requires a loopback server and client (HTTP 403) |
 | `trace_db_locked` | 2 | the trace database is locked by another process |
 | `trace_db_shared` | 2 | dashboard API: another registered repository uses the same trace DB (HTTP 409) |
 | `unknown_base` | 2 | the base branch does not exist |
@@ -1121,7 +1122,7 @@ structured by project and step:
 
 ### Task header
 
-YAML front matter; HAIFA writes the keys in this order: `id, title, status, assignee, workflow, depends_on, related, follows, writes, test_timeout, auto_continue, auto_merge, auto_heal`.
+YAML front matter; HAIFA writes the keys in this order: `id, title, status, archived, assignee, workflow, depends_on, related, follows, writes, test_timeout, auto_continue, auto_merge, auto_heal`.
 
 - `id`, `title` and `status` are required.
 - `status` is one of `todo, done, cancelled`. Set `todo` or `cancelled` by hand
@@ -1349,14 +1350,18 @@ library (without a library the packaged workflows: `build` (Implement the task i
   a `test` repeats the plan's coverage, so conditions can read `test.coverage == "full"`.
   The packaged `heal` workflow runs the whole suite, repairs until it is green (each repair
   checked scoped, then confirmed on the whole suite) and commits only on a green full run.
-- A red `test` goes to the tester first (phase `triage`): `failure_cause: plan` (the
-  checks themselves were wrong) replaces the plan and runs the test again without a
-  repair round and without the builder, at most twice per run; `code` leaves the
-  failure for `fix`.
-- A test review (`test_review`) that requires tests the repo does not have yet: the
-  revised plan (`plan_revision`) lists them in `missing_tests`, the builder writes them
-  (phase `test_fix`, role `fix`, with the review as `previous_envelope`), the tester
-  plans again and the new plan is reviewed; at most twice per run, then the run stops.
+- A red `test` goes directly to the builder's `fix` with the failed commands
+  and their verbatim output. There are no implicit triage or test-plan review calls.
+  The final code reviewer requests missing regression tests directly from the builder.
+- Task runs share a local testing profile per repository and backlog project, under
+  the configured data directory's `test_profiles/`. The tester receives it in
+  the `testing_profile` prompt variable and returns reusable runner commands, test locations and
+  diff-selection rules in the `testing_profile` field (at most 12000 characters).
+  Configuration/runner/dependency or test-layout changes mark it stale; the same
+  tester call refreshes it while selecting checks for the actual diff. Measured check
+  durations are included as `observed_seconds` for this machine. Profiles are hints,
+  never cached test verdicts or a replacement for reading the diff. An unavailable
+  cache does not prevent ordinary test planning; no agent writes outside its worktree.
 - A `test` step (also under another `id`, e.g. `retest`) runs the checks of the latest
   `test_plan` in order, without a shell, and runs every check even after one fails (only
   a failed check with `stop_on_fail: true` or an exhausted time limit stops the rest,
