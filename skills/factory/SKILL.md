@@ -9,12 +9,12 @@ description: >-
   multi-repository operations.
 ---
 
-# HAIFA skill: driving the `factory` CLI (aifactory 0.1.540)
+# HAIFA skill: driving the `factory` CLI (aifactory 0.1.553)
 
 This guide is generated from the installed code by `factory --skill`.
 Save its Markdown output as an agent's `SKILL.md`; `factory --skill --json`
 returns the same guide inside the JSON envelope. Compare `factory --version`
-with aifactory 0.1.540: whenever the version changes, regenerate this skill
+with aifactory 0.1.553: whenever the version changes, regenerate this skill
 with `factory --skill` and replace the saved copy.
 
 ## Prerequisites
@@ -340,7 +340,7 @@ For the task's last succeeded run that has no pull request (its push or PR faile
 factory task clean [--json] [--repo PATH]
 ```
 
-Remove worktrees of runs whose PR is merged or closed, and of abandoned runs (a newer run of the task exists). Also delete local and remote branches of merged PRs, including older merges, unless an open stacked PR, a running run or a checkout still uses them. Keep closed and abandoned branches. Deletion failures are warnings; deleted_branches lists deleted local and remote refs.
+Remove worktrees of runs whose PR is merged or closed, and of abandoned runs (a newer run of the task exists). Also delete local and remote branches of merged PRs, including older merges, unless an open stacked PR, a running run or a checkout still uses them. Also clean done/cancelled tasks, closed factory branches and orphan directories. Keep dirty active tasks and the latest retryable run. Cleanup runs automatically before and after execution. Deletion failures are warnings; deleted_branches lists deleted local and remote refs; branch_reasons records their reasons.
 
 - `--json`: print machine-readable JSON
 - `--repo` `PATH`: repository root with .factory/config.yaml (default: the current git repo)
@@ -351,7 +351,7 @@ Remove worktrees of runs whose PR is merged or closed, and of abandoned runs (a 
 factory task stop ID [--run RUN_ID] [--json] [--repo PATH]
 ```
 
-Send SIGTERM to the coding agents of the task's running run and then to the run's process (SIGKILL after a timeout). The run is marked stopped; its worktree and branch stay (factory task clean removes them).
+Send SIGTERM to the coding agents of the task's running run and then to the run's process (SIGKILL after a timeout). The run is marked stopped; its worktree is cleaned by the next run or factory task clean when eligible; the latest failed or stopped todo run stays available for retry.
 
 - `ID`: task id (required)
 - `--run` `RUN_ID`: stop exactly this run (it must belong to the task)
@@ -928,6 +928,8 @@ serve the local dashboard (127.0.0.1 unless --host) and open it
 | `existing_config` | 2 | factory init: the repo has an sssf installation (adws/adw_sssf_config/); HAIFA does not take it over |
 | `fetch_failed` | 2 | git fetch failed |
 | `file_exists` | 2 | the task file or the project/step directory already exists |
+| `follow_up_collision` | 2 | follow-up IDs could not be reconciled with base; resolve the duplicate or conflicting backlog changes and retry |
+| `follow_up_head_changed` | 2 | base changed during approval; follow-up IDs were reconciled, but the new PR head needs checks before approval can finish; retry task approve |
 | `gh_failed` | 2 | a gh command failed |
 | `gh_missing` | 2 | the gh CLI is not installed |
 | `git_identity_missing` | 2 | git has no user.name or user.email |
@@ -1913,7 +1915,16 @@ the rebase. Then approve.
 
 - `factory backlog sync --json` finds task PRs merged outside factory and opens one sync PR
   that marks them done (never commits to base, never merges it).
-- `factory task clean --json` removes worktrees of merged, closed or abandoned runs.
+- Cleanup runs automatically before and after execution, including retry, failure and stop.
+  `factory task clean --json` invokes the same cleanup manually. It removes worktrees of
+  done/cancelled tasks, merged/closed PRs and older runs without a PR, plus orphan
+  directories in the configured worktrees directory, and prunes Git registrations.
+  It deletes unused factory branches locally and remotely for cancelled tasks and
+  merged/closed PRs. A running run, open PR, checkout or open stacked PR protects
+  the resources it still uses. Dirty worktrees of nonterminal tasks are kept with
+  warnings, as is the latest failed/stopped todo run for retry. Deletion failures
+  are warnings and never fail a run. `removed[].reason` and `branch_reasons` explain
+  each deletion; `deleted_branches` keeps listing local and remote branch names.
 
 ### Upgrade
 
