@@ -9,12 +9,12 @@ description: >-
   multi-repository operations.
 ---
 
-# HAIFA skill: driving the `factory` CLI (aifactory 0.1.553)
+# HAIFA skill: driving the `factory` CLI (aifactory 0.1.0)
 
 This guide is generated from the installed code by `factory --skill`.
 Save its Markdown output as an agent's `SKILL.md`; `factory --skill --json`
 returns the same guide inside the JSON envelope. Compare `factory --version`
-with aifactory 0.1.553: whenever the version changes, regenerate this skill
+with aifactory 0.1.0: whenever the version changes, regenerate this skill
 with `factory --skill` and replace the saved copy.
 
 ## Prerequisites
@@ -1242,7 +1242,7 @@ Every key, including nested entries, is generated from the configuration model.
 | `base_pr_merge` | `"manual"` | Pull requests of factory's own base changes: manual leaves them to a reviewer; auto approves them where the hosting lets the author (Azure DevOps), merges them at once (GitHub with --admin when the branch protection requires it) and fast-forwards the local base. |
 | `github_approver` | `null` | GitHub login that sends the approve review when a task PR is approved (git_provider github). It must be another account than the PR author, logged in to gh on the machine (gh auth login). Unset: no review is sent. |
 | `test_timeout` | `null` | Shared time limit in positive whole seconds of the checks a test step runs; null means 600. Inherited backlog test_timeout overrides it. |
-| `test_slots` | `1` | Maximum simultaneous test steps on this machine; others queue without consuming their timeout. |
+| `test_slots` | `0` | Maximum simultaneous test steps on this machine; others queue without consuming their timeout. Zero (the default) disables the machine-wide limit. |
 | `stacked_prs` | `false` | A task whose dependencies wait only in open pull requests starts from the dependency's PR branch; its PR is rebased onto base and merged after theirs. |
 | `max_parallel_runs` | `1` | Maximum concurrent task runs within one auto-continue chain. |
 | `protected_files` | `[".factory/"]` | Paths protected from agents unless explicitly allowed by their writes; task scope still applies. |
@@ -1375,7 +1375,9 @@ library (without a library the packaged workflows: `build` (Implement the task i
   step's `test_plan` field (also in the `test_result` prompt variable) records coverage, reason, the commands
   and how many ran. Reviewers judge the plan: enough to trust the change, not wider than
   it needs.
-- At most `test_slots` (`.factory/config.yaml`, whole number ≥ 1, default 1) `test`
+- Test steps run concurrently across tasks by default: `test_slots: 0` disables the
+  machine-wide queue. A positive `test_slots` (`.factory/config.yaml`) opts into a limit.
+  At most that many `test`
   steps run their command on the machine at once; the others wait in a queue in the
   order they asked (`<HAIFA home>/test_slots`). The wait is traced as `test_slot` events
   (`state: waiting` with `ahead`, then `state: acquired` with `waited_seconds`), shows in
